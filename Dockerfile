@@ -1,20 +1,12 @@
-# Etapa de compilación
-FROM eclipse-temurin:17-jdk AS builder
-
+FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /app
+COPY pom.xml .
+COPY src ./src
+RUN mvn -B -DskipTests package
 
-COPY . .
-
-RUN chmod +x mvnw
-RUN ./mvnw clean package -DskipTests
-
-# Etapa de ejecución
 FROM eclipse-temurin:17-jre
-
 WORKDIR /app
-
-COPY --from=builder /app/target/interfazGrafica-0.0.1-SNAPSHOT.jar app.jar
-
-EXPOSE 8080
-
-ENTRYPOINT ["java", "-jar", "app.jar"]
+COPY --from=build /app/target/interfazGrafica-0.0.1-SNAPSHOT.jar app.jar
+ENV PORT=80
+EXPOSE 80
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-80} -jar /app/app.jar"]
